@@ -145,16 +145,17 @@ class Controller:
         self.injected = True
         self._log(f"UUU DLL injected via {method}. Console is ready.", "success")
 
-    def load_level(self, level: Level) -> None:
-        self._run(lambda: self._load_level(level), "loading level")
+    def _ensure_ready(self) -> bool:
+        """Make sure the game is running and the DLL is injected.
 
-    def _load_level(self, level: Level) -> None:
-        # Make sure we have a game + injection, auto-handling if enabled.
+        Returns True when a command can be sent. Logs and returns False
+        otherwise. Auto-injects when the setting allows it.
+        """
         if self.pid is None:
             self.pid = injector.find_game_pid()
         if self.pid is None:
             self._log("Game is not running — start it first.", "error")
-            return
+            return False
 
         if not self.injected and not injector.is_dll_loaded(self.pid):
             if self.settings["auto_inject_on_load"]:
@@ -164,20 +165,44 @@ class Controller:
                 self._log(f"UUU DLL injected via {method}.", "success")
             else:
                 self._log("DLL not injected — click Inject DLL first.", "error")
-                return
+                return False
         else:
             self.injected = True
+        return True
 
+    def _send(self, command: str) -> None:
         console_key = by_label(self.settings["console_key_label"])
-        self._log(f"Loading '{level.name}'  ({level.command})…", "info")
         commands.send_console_command(
             self.pid,
-            level.command,
+            command,
             console_key,
             close_console=self.settings["close_console_after"],
         )
+
+    def load_level(self, level: Level) -> None:
+        self._run(lambda: self._load_level(level), "loading level")
+
+    def _load_level(self, level: Level) -> None:
+        if not self._ensure_ready():
+            return
+        self._log(f"Loading '{level.name}'  ({level.command})…", "info")
+        self._send(level.command)
         self._log(f"Sent '{level.command}'. If nothing happened, check the console key matches UUU.",
                   "success")
+
+    def send_command(self, command: str) -> None:
+        self._run(lambda: self._send_command(command), "sending command")
+
+    def _send_command(self, command: str) -> None:
+        command = command.strip()
+        if not command:
+            self._log("Enter a command first.", "warn")
+            return
+        if not self._ensure_ready():
+            return
+        self._log(f"Sending: {command}", "info")
+        self._send(command)
+        self._log(f"Sent: {command}", "success")
 
     def exit_game(self) -> None:
         self._run(self._exit_game, "exiting game")

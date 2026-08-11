@@ -79,6 +79,40 @@ always pasted, never typed, so level names never come out garbled.
 Danger Room and Nick Test Arena require you to select **Wolverine** in the Hub
 first; the tool reminds you before loading them.
 
+## Extra console commands
+
+The **Advanced console** section can send *any* console command through the same
+reliable clipboard-paste path — either type it in the box (e.g. `stat fps`) and
+press Enter, or use the quick-pick menu. These are general Unreal Engine 4
+commands, so availability depends on the shipping build; treat them as things to
+try, not guarantees.
+
+| Quick pick | Command | Does |
+| --- | --- | --- |
+| Show FPS | `stat fps` | Frame-rate overlay |
+| Show frame timings | `stat unit` | Game / draw / GPU millisecond breakdown |
+| Hide all stats | `stat none` | Clears the overlay |
+| Hi-res screenshot | `HighResShot 2` | Saves a 2× screenshot to the game's `Saved/Screenshots` |
+| Restart current level | `RestartLevel` | Reloads the current map |
+| Pause | `pause` | Toggles pause |
+| Slow motion 50% / 2× | `slomo 0.5` / `slomo 2` | Game speed |
+| Quit game | `quit` | Closes the game from the engine |
+
+## App icon
+
+The window and taskbar icon use `MPUVR.ico` if you drop one next to the tool
+(or into `assets/`); otherwise a generated `assets/mpuvr.ico` is used. The icon
+shows even when running from source (`python run.py`), and `build.bat` bakes it
+into the `.exe`.
+
+## Splash screen
+
+On startup the tool shows a splash for a couple of seconds (click it to skip).
+It uses `splash.png` if you drop one next to the tool (or into `assets/`) —
+otherwise a generated `assets/splash.png` is used. The splash window is sized to
+the image, so make your `splash.png` the size you want it shown. Turn it off any
+time via **Options → Show splash screen on startup**.
+
 ## Running from source
 
 ```
