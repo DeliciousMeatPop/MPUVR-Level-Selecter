@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import tkinter as tk
 import webbrowser
 from datetime import datetime
 from tkinter import messagebox
@@ -11,12 +12,14 @@ import customtkinter as ctk
 from . import __version__
 from .config import Settings
 from .controller import Controller, LogEvent, StateEvent
+from .extra_commands import QUICK_COMMANDS
+from .extra_commands import by_label as quick_by_label
+from .icons import icon_ico, icon_png
 from .keys import CONSOLE_KEYS, by_label
 from .levels import LEVELS, Level, categories, levels_in
 
 GITHUB_URL = "https://github.com/DeliciousMeatPop"
 TELEGRAM_URL = "https://t.me/ARMGDDNGames"
-DISCORD_URL = "https://discord.com/invite/28fRTaTSd9"
 
 # Palette
 BG = "#1c1c1c"
@@ -41,9 +44,10 @@ class App(ctk.CTk):
         self.controller = Controller(self.settings)
 
         self.title("Marvel Powers United VR — Level Select Tool")
-        self.geometry("880x860")
-        self.minsize(760, 720)
+        self.geometry("880x900")
+        self.minsize(760, 760)
         self.configure(fg_color=BG)
+        self._apply_window_icon(self)
 
         self._level_buttons: list[tuple[Level, ctk.CTkButton]] = []
 
@@ -52,6 +56,7 @@ class App(ctk.CTk):
         self._build_actions()
         self._build_options()
         self._build_level_picker()
+        self._build_console_box()
         self._build_log()
         self._build_footer()
 
@@ -60,6 +65,38 @@ class App(ctk.CTk):
         self.controller.start_polling()
         self.after(100, self._pump_events)
         self._log_line("Ready. Start the game, then pick a level — injection is automatic.", "info")
+
+    # -- icon ----------------------------------------------------------------
+
+    def _apply_window_icon(self, window) -> None:
+        """Set the MPUVR icon on a window (title bar / taskbar).
+
+        Uses a .ico on Windows and a PhotoImage everywhere as a fallback. A
+        user-supplied MPUVR.ico next to the tool takes priority (see icons.py).
+        CustomTkinter re-asserts its own icon shortly after a window is created,
+        so we also re-apply on a short delay.
+        """
+        ico = icon_ico()
+        png = icon_png()
+
+        def _set():
+            if ico:
+                try:
+                    window.iconbitmap(ico)
+                except Exception:  # noqa: BLE001 - non-Windows / bad file
+                    pass
+            if png:
+                try:
+                    window._mpuvr_icon = tk.PhotoImage(file=png)  # keep a ref
+                    window.iconphoto(True, window._mpuvr_icon)
+                except Exception:  # noqa: BLE001
+                    pass
+
+        _set()
+        try:
+            window.after(300, _set)
+        except Exception:  # noqa: BLE001
+            pass
 
     # -- layout --------------------------------------------------------------
 
@@ -163,6 +200,36 @@ class App(ctk.CTk):
             else:
                 btn.pack_forget()
 
+    def _build_console_box(self) -> None:
+        card = ctk.CTkFrame(self, fg_color=CARD, corner_radius=10)
+        card.pack(fill="x", padx=20, pady=(0, 8))
+
+        head = ctk.CTkFrame(card, fg_color="transparent")
+        head.pack(fill="x", padx=12, pady=(10, 2))
+        ctk.CTkLabel(head, text="Advanced console",
+                     font=ctk.CTkFont(size=13, weight="bold")).pack(side="left")
+        ctk.CTkLabel(head, text="quick tools + send any console command",
+                     font=ctk.CTkFont(size=11), text_color="#9a9a9a").pack(side="left", padx=8)
+
+        row = ctk.CTkFrame(card, fg_color="transparent")
+        row.pack(fill="x", padx=12, pady=(2, 12))
+
+        # Quick-pick menu of handy commands.
+        self.quick_menu = ctk.CTkOptionMenu(
+            row, values=[q.label for q in QUICK_COMMANDS], width=210,
+            command=self._on_quick_pick,
+        )
+        self.quick_menu.set("Quick command…")
+        self.quick_menu.pack(side="left", padx=(0, 8))
+
+        # Free-form command entry.
+        self.cmd_entry = ctk.CTkEntry(row, placeholder_text="type a console command, e.g. stat fps")
+        self.cmd_entry.pack(side="left", expand=True, fill="x", padx=(0, 8))
+        self.cmd_entry.bind("<Return>", lambda _e: self._send_custom_command())
+
+        ctk.CTkButton(row, text="Send", width=80,
+                      command=self._send_custom_command).pack(side="left")
+
     def _build_log(self) -> None:
         wrap = ctk.CTkFrame(self, fg_color="transparent")
         wrap.pack(fill="both", expand=True, padx=20, pady=(0, 8))
@@ -187,20 +254,20 @@ class App(ctk.CTk):
 
         credit = ctk.CTkFrame(footer, fg_color="transparent")
         credit.pack(side="left")
-        self._credit_part(credit, "Made with ")
-        self._credit_part(credit, "❤️", color="#ff5a5a")
-        self._credit_part(credit, " by ")
+        # Single labels with tight packing so there is no gap around the emoji.
+        self._credit_part(credit, "Made with ❤️ by ")
         self._credit_link(credit, "DMP", GITHUB_URL)
         self._credit_part(credit, " of ")
         self._credit_link(credit, "ARMGDDN Games", TELEGRAM_URL)
 
     def _credit_part(self, parent, text, color="#c0c0c0") -> None:
-        ctk.CTkLabel(parent, text=text, font=ctk.CTkFont(size=12), text_color=color).pack(side="left")
+        ctk.CTkLabel(parent, text=text, font=ctk.CTkFont(size=12), text_color=color).pack(
+            side="left", padx=0)
 
     def _credit_link(self, parent, text, url) -> None:
         link = ctk.CTkLabel(parent, text=text, font=ctk.CTkFont(size=12, weight="bold"),
                             text_color=LINK, cursor="hand2")
-        link.pack(side="left")
+        link.pack(side="left", padx=0)
         link.bind("<Button-1>", lambda _e, u=url: webbrowser.open_new(u))
 
     # -- event handling ------------------------------------------------------
@@ -252,6 +319,23 @@ class App(ctk.CTk):
                 return
         self.controller.load_level(level)
 
+    def _on_quick_pick(self, label: str) -> None:
+        quick = quick_by_label(label)
+        if quick is None:
+            return
+        # Put it in the box so the user sees exactly what will run, then send.
+        self.cmd_entry.delete(0, "end")
+        self.cmd_entry.insert(0, quick.command)
+        self.quick_menu.set("Quick command…")
+        self.controller.send_command(quick.command)
+
+    def _send_custom_command(self) -> None:
+        command = self.cmd_entry.get().strip()
+        if not command:
+            self._log_line("Type a console command first.", "warn")
+            return
+        self.controller.send_command(command)
+
     def _on_close(self) -> None:
         self.controller.stop_polling()
         self.destroy()
@@ -261,29 +345,27 @@ class App(ctk.CTk):
     def _show_about(self) -> None:
         win = ctk.CTkToplevel(self)
         win.title("About")
-        win.geometry("420x300")
+        win.geometry("420x260")
         win.configure(fg_color=BG)
         win.transient(self)
         win.after(100, win.lift)
+        self._apply_window_icon(win)
 
         ctk.CTkLabel(win, text="Marvel Powers United VR\nLevel Select Tool",
                      font=ctk.CTkFont(size=18, weight="bold"), justify="center").pack(pady=(20, 6))
         ctk.CTkLabel(win, text=f"v{__version__}", text_color=ACCENT).pack()
         ctk.CTkLabel(
             win,
-            text="Made by DeliciousMeatPop (DMP) of ARMGDDN Games\n"
-                 "for the Marvel Powers United VR Revival community.",
+            text="Made with ❤️ by DeliciousMeatPop (DMP) of ARMGDDN Games.",
             justify="center", wraplength=380, text_color="#c8c8c8",
         ).pack(pady=14)
 
         links = ctk.CTkFrame(win, fg_color="transparent")
         links.pack(pady=6)
-        ctk.CTkButton(links, text="GitHub (DMP)", width=120,
+        ctk.CTkButton(links, text="GitHub (DMP)", width=140,
                       command=lambda: webbrowser.open_new(GITHUB_URL)).pack(side="left", padx=5)
-        ctk.CTkButton(links, text="ARMGDDN Telegram", width=140,
+        ctk.CTkButton(links, text="ARMGDDN Telegram", width=160,
                       command=lambda: webbrowser.open_new(TELEGRAM_URL)).pack(side="left", padx=5)
-        ctk.CTkButton(win, text="MPUVR Revival Discord", width=200,
-                      command=lambda: webbrowser.open_new(DISCORD_URL)).pack(pady=6)
 
     def _show_options(self) -> None:
         win = ctk.CTkToplevel(self)
@@ -292,6 +374,7 @@ class App(ctk.CTk):
         win.configure(fg_color=BG)
         win.transient(self)
         win.after(100, win.lift)
+        self._apply_window_icon(win)
 
         auto = ctk.BooleanVar(value=bool(self.settings["auto_inject_on_load"]))
         close_c = ctk.BooleanVar(value=bool(self.settings["close_console_after"]))
