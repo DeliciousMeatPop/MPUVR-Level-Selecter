@@ -10,7 +10,7 @@ content locked behind matchmaking or cut from the retail build.
 
 Made with ❤️ by [DMP](https://github.com/DeliciousMeatPop) of
 [ARMGDDN Games](https://t.me/ARMGDDNGames), for the
-[Marvel Powers United VR Revival community](https://discord.com/invite/28fRTaTSd9).
+Marvel Powers United VR Revival community (originally, the project is now defunct after a DCMA from meta over the game files).
 
 ## What changed vs. v1.0.x
 
