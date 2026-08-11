@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# PyInstaller
+build/
+dist/
+*.spec.bak
+
+# Tool runtime files (generated next to the exe)
+settings.json
+levelselectscript.log
+
+# Game / injector payload (shipped alongside, not source)
+WindowsNoEditor/
+InjectUUU/
+output/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

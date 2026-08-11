@@ -1,0 +1,6 @@
+# Runtime dependencies (Windows only).
+customtkinter>=5.2,<7
+psutil>=5.9
+
+# Build-time only:
+#   pyinstaller>=6.0
