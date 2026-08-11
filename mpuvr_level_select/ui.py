@@ -316,8 +316,12 @@ class App(ctk.CTk):
 
         credit = ctk.CTkFrame(footer, fg_color="transparent")
         credit.pack(side="left")
-        # Single labels with tight packing so there is no gap around the emoji.
-        self._credit_part(credit, "Made with ❤️ by ")
+        # Use the heart-suit glyph (U+2665), not the ❤️ emoji: Tk renders the
+        # emoji as a monochrome glyph (can't be red) and its variation selector
+        # adds a stray gap. '♥' is a normal glyph we can color red with no gap.
+        self._credit_part(credit, "Made with")
+        self._credit_part(credit, " ♥ ", color="#ff4d4d")
+        self._credit_part(credit, "by ")
         self._credit_link(credit, "DMP", GITHUB_URL)
         self._credit_part(credit, " of ")
         self._credit_link(credit, "ARMGDDN Games", TELEGRAM_URL)
@@ -418,7 +422,7 @@ class App(ctk.CTk):
         ctk.CTkLabel(win, text=f"v{__version__}", text_color=ACCENT).pack()
         ctk.CTkLabel(
             win,
-            text="Made with ❤️ by DeliciousMeatPop (DMP) of ARMGDDN Games.",
+            text="Made with ♥ by DeliciousMeatPop (DMP) of ARMGDDN Games.",
             justify="center", wraplength=380, text_color="#c8c8c8",
         ).pack(pady=14)
 
