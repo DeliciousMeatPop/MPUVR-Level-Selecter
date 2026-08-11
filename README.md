@@ -1,78 +1,106 @@
-# Marvel Powers United VR: Single Player Level Commands
+# Marvel Powers United VR — Level Select Tool
 
-A reference for loading Marvel Powers United VR levels directly via the Unreal
-console, using the Universal Unreal Engine Unlocker (UUU). Useful for reaching
-content that is otherwise locked behind matchmaking or cut from the retail
-build.
+A rewrite of the ARMGDDN Games level-select tool. It launches Marvel Powers
+United VR, injects the Universal Unreal Engine Unlocker (UUU) DLL **directly**
+(no UuuClient GUI), and loads any level through the Unreal console — including
+content locked behind matchmaking or cut from the retail build.
 
-> Requires a legitimate installed copy of the game. This only exposes the
-> engine console that already ships with the title.
+> Requires a legitimate installed copy of the game. This only drives the engine
+> console that already ships with the title.
 
-## Requirements
+Made with ❤️ by [DMP](https://github.com/DeliciousMeatPop) of
+[ARMGDDN Games](https://t.me/ARMGDDNGames), for the
+[Marvel Powers United VR Revival community](https://discord.com/invite/28fRTaTSd9).
 
-| Item | Notes |
+## What changed vs. v1.0.x
+
+| Old behavior | New behavior |
 | --- | --- |
-| Marvel Powers United VR | PC build, `MarvelVR-Win64-Shipping.exe` |
-| Universal Unreal Engine Unlocker | Available from [framedsc.com](https://framedsc.com/GeneralGuides/universal_ue4_consoleunlocker.htm) |
-| A PCVR headset | Some levels render on the flat screen only, see notes below |
+| Launched `UuuClient.exe` (minimized) to inject | Injects `UniversalUE4Unlocker.dll` directly via native `LoadLibrary` — **the UUU GUI is never opened**. Falls back to the bundled `Injector.exe` if needed. |
+| Typed the command key-by-key with PowerShell `SendKeys` | **Pastes** the command from the clipboard (Ctrl+V) — works on **any keyboard layout** (AZERTY / QWERTZ / etc.). No character is ever mistyped. |
+| Opened the console by sending the `~` character (broken on non-US layouts, and `SendKeys` treats `~` as Enter) | Opens the console by **physical key (scancode)**, or a layout-independent key (F10, Insert, …) you pick from a list. |
+| Ran everything on the UI thread — the window froze | All work runs on background threads; the window stays responsive with a live status bar and colored activity log. |
+| Plain Tkinter look | Modern dark CustomTkinter UI with a searchable, categorized level list. |
+
+## Layout
+
+Drop the tool into the game folder, next to these (same as the original):
+
+```
+<game folder>/
+├─ MPUVR Level Select Tool.exe        (or: run.py)
+├─ WindowsNoEditor/MarvelVR/Binaries/Win64/MarvelVR-Win64-Shipping.exe
+└─ InjectUUU/
+   ├─ UniversalUE4Unlocker.dll        (required — this is what gets injected)
+   └─ Injector.exe                    (optional fallback injector)
+```
 
 ## Usage
 
-1. Launch the game so that `MarvelVR-Win64-Shipping.exe` is running.
-2. Launch the Universal Unreal Engine Unlocker.
-3. Select the `MarvelVR-Win64-Shipping.exe` process and inject the DLL.
-4. Click the Marvel Powers United window so it has keyboard focus.
-5. Press `~`. A black console bar appears across the screen.
-6. Type `open` followed by a level command, then press Enter.
+1. Click **Start / Restart Game** (or launch the game yourself — the tool
+   auto-detects it).
+2. Pick a level. That's it — the DLL is injected automatically on first load.
+3. If a level doesn't load, make sure the **Console key** in the tool matches the
+   console key configured in UUU (retail default is the backtick/tilde key, which
+   is also the tool's default).
 
-Example:
+The **Inject DLL** and **Exit Game** buttons are there if you want manual control.
 
-```
-open marketplace
-```
+### Console key & non-QWERTY keyboards
 
-That loads the Knowhere Marketplace.
+The backtick/tilde option is sent by *physical key position*, so it works even on
+layouts where `~` needs Shift or lives elsewhere. If that key does something else
+on your keyboard, set UUU's console key to something universal (e.g. **F10** or
+**Insert**) and pick the matching entry in the tool. The command text itself is
+always pasted, never typed, so level names never come out garbled.
 
 ## Level commands
 
-| Command | Level |
+| Level | Command |
 | --- | --- |
-| `menu` | Title screen, leads to the hub |
-| `ops` | Hub |
-| `starktower` | Tutorial intro sequence (playable as Captain America or Black Widow only) |
-| `hangar` | X-Mansion Hangar |
-| `marketplace` | Knowhere Marketplace |
-| `throneroom` | Asgard |
-| `jotunheim` | Jotunheim |
-| `researchlab` | Wakanda |
-| `forest` | Halfworld |
-| `arena` | Sakaar Arena |
-| `downtown` | Downtown New York |
-| `void` | Dark Dimension |
-| `palace` | Attilan |
-| `sanctuaryii` | Sanctuary II (Thanos boss battle) |
+| Game Menu | `open menu` |
+| Ops — Hub | `open Ops` |
+| Stark Tower (tutorial intro) | `open StarkTower` |
+| Hangar — X-Mansion Hangar | `open Hangar` |
+| Marketplace — Knowhere | `open Marketplace` |
+| Throne Room — Asgard | `open ThroneRoom` |
+| Jotunheim | `open Jotunheim` |
+| Research Lab — Wakanda | `open ResearchLab` |
+| Forest — Halfworld | `open Forest` |
+| Arena — Sakaar | `open Arena` |
+| Downtown — New York | `open DownTown` |
+| Void — Dark Dimension | `open Void` |
+| Palace — Attilan | `open Palace` |
+| Sanctuary II — Thanos boss | `open SanctuaryII` |
+| Danger Room (needs Wolverine) | `open DangerRoom03` |
+| Nick Test Arena (needs Wolverine) | `open Nick_TestArena` |
+| Move Tutorial (debug) | `open MoveTutorial` |
 
-## Development and debug levels
+Danger Room and Nick Test Arena require you to select **Wolverine** in the Hub
+first; the tool reminds you before loading them.
 
-These load but are incomplete. Expect dead ends.
+## Running from source
 
-| Command | Level | Known issues |
-| --- | --- | --- |
-| `movetutorial` | Early movement tutorial | Ends on a placeholder after the turn, move, and menu lessons. No exit other than quitting. |
-| `nick_testarena` | Early Danger Room training map | Renders on the PC monitor only, not in the headset. Units cannot be spawned. |
-| `dangerroom03` | Danger Room training map | Renders on the PC monitor only, not in the headset. Units cannot be spawned. |
-| `EndScreen_Retail_Jul_2018` | Retail demo end card | Displays the "available now" screen and ends the session. Built for show floor demos. |
+```
+pip install -r requirements.txt
+python run.py
+```
+
+## Building the .exe
+
+On Windows:
+
+```
+build.bat
+```
+
+This produces `dist/MPUVR Level Select Tool.exe`. Copy it next to the
+`WindowsNoEditor` and `InjectUUU` folders (see **Layout** above).
 
 ## Notes
 
-- Level commands are case insensitive apart from `EndScreen_Retail_Jul_2018`,
-  which is safest typed exactly as written.
-- The console closes on `~` or `Esc`. If input stops registering, click the game
-  window again to restore focus.
-- Injection has to be redone every time the game process restarts.
-
-## Source
-
-Transcribed from the community cheat sheet
-"Marvel Powers United Single Player Cheat Sheet"
-(<https://www.scribd.com/document/819204526/Marvel-Powers-United-Single-Player-Cheat-Sheet-Sheet1>).
+- Injection is redone automatically whenever the game process restarts.
+- Native injection may need the tool to be run **as Administrator** on some
+  systems; if native injection fails, it automatically retries with
+  `Injector.exe`.
+- `settings.json` and `levelselectscript.log` are written next to the tool.
