@@ -14,7 +14,7 @@ from .config import Settings
 from .controller import Controller, LogEvent, StateEvent
 from .extra_commands import QUICK_COMMANDS
 from .extra_commands import by_label as quick_by_label
-from .icons import icon_ico, icon_png
+from .icons import icon_ico, icon_png, splash_png
 from .keys import CONSOLE_KEYS, by_label
 from .levels import LEVELS, Level, categories, levels_in
 
@@ -32,6 +32,45 @@ LOG_COLORS = {
     "warn": "#e8c15a",
     "error": "#ff6b6b",
 }
+
+
+class Splash(ctk.CTkToplevel):
+    """Borderless startup splash. Auto-dismisses; click to skip.
+
+    Uses tk.PhotoImage (PNG) so no Pillow is required at runtime. The window is
+    sized to the image, so provide a splash.png at the size you want it shown.
+    """
+
+    def __init__(self, master, image_path: str, on_close, hold_ms: int = 2600):
+        super().__init__(master)
+        self._on_close = on_close
+        self.overrideredirect(True)
+        self.configure(fg_color=BG)
+        try:
+            self.attributes("-topmost", True)
+        except Exception:  # noqa: BLE001
+            pass
+
+        self._img = tk.PhotoImage(file=image_path)
+        w, h = self._img.width(), self._img.height()
+        sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+        self.geometry(f"{w}x{h}+{(sw - w) // 2}+{(sh - h) // 2}")
+
+        label = tk.Label(self, image=self._img, borderwidth=0, highlightthickness=0, bg=BG)
+        label.pack()
+        label.bind("<Button-1>", lambda _e: self.close())
+        self.bind("<Button-1>", lambda _e: self.close())
+
+        self.after(hold_ms, self.close)
+
+    def close(self) -> None:
+        if self._on_close is None:
+            return
+        callback, self._on_close = self._on_close, None
+        try:
+            self.destroy()
+        finally:
+            callback()
 
 
 class App(ctk.CTk):
@@ -65,6 +104,29 @@ class App(ctk.CTk):
         self.controller.start_polling()
         self.after(100, self._pump_events)
         self._log_line("Ready. Start the game, then pick a level — injection is automatic.", "info")
+
+        self._maybe_show_splash()
+
+    def _maybe_show_splash(self) -> None:
+        """Show the startup splash, keeping the main window hidden until it closes."""
+        if not self.settings["show_splash"]:
+            return
+        path = splash_png()
+        if not path:
+            return
+        try:
+            self.withdraw()
+            Splash(self, path, on_close=self._reveal)
+        except Exception:  # noqa: BLE001 - never let the splash block startup
+            self._reveal()
+
+    def _reveal(self) -> None:
+        try:
+            self.deiconify()
+            self.lift()
+            self.focus_force()
+        except Exception:  # noqa: BLE001
+            pass
 
     # -- icon ----------------------------------------------------------------
 
@@ -370,7 +432,7 @@ class App(ctk.CTk):
     def _show_options(self) -> None:
         win = ctk.CTkToplevel(self)
         win.title("Options")
-        win.geometry("420x280")
+        win.geometry("420x320")
         win.configure(fg_color=BG)
         win.transient(self)
         win.after(100, win.lift)
@@ -379,6 +441,7 @@ class App(ctk.CTk):
         auto = ctk.BooleanVar(value=bool(self.settings["auto_inject_on_load"]))
         close_c = ctk.BooleanVar(value=bool(self.settings["close_console_after"]))
         supp = ctk.BooleanVar(value=bool(self.settings["suppress_wolverine_warning"]))
+        splash = ctk.BooleanVar(value=bool(self.settings["show_splash"]))
 
         def bind(var, key):
             self.settings[key] = bool(var.get())
@@ -392,6 +455,9 @@ class App(ctk.CTk):
             anchor="w", padx=30, pady=6)
         ctk.CTkCheckBox(win, text="Skip the Wolverine reminder",
                         variable=supp, command=lambda: bind(supp, "suppress_wolverine_warning")).pack(
+            anchor="w", padx=30, pady=6)
+        ctk.CTkCheckBox(win, text="Show splash screen on startup",
+                        variable=splash, command=lambda: bind(splash, "show_splash")).pack(
             anchor="w", padx=30, pady=6)
 
         ctk.CTkButton(win, text="Reset all settings to default",

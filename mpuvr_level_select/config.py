@@ -13,6 +13,7 @@ DEFAULTS = {
     "close_console_after": True,
     "auto_inject_on_load": True,
     "suppress_wolverine_warning": False,
+    "show_splash": True,
 }
 
 

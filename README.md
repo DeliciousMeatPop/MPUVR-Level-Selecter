@@ -105,6 +105,14 @@ The window and taskbar icon use `MPUVR.ico` if you drop one next to the tool
 shows even when running from source (`python run.py`), and `build.bat` bakes it
 into the `.exe`.
 
+## Splash screen
+
+On startup the tool shows a splash for a couple of seconds (click it to skip).
+It uses `splash.png` if you drop one next to the tool (or into `assets/`) —
+otherwise a generated `assets/splash.png` is used. The splash window is sized to
+the image, so make your `splash.png` the size you want it shown. Turn it off any
+time via **Options → Show splash screen on startup**.
+
 ## Running from source
 
 ```

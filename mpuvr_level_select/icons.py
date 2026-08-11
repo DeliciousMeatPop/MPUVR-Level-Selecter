@@ -21,6 +21,12 @@ _PNG_CANDIDATES = [
     paths.resource("assets", "MPUVR.png"),
     paths.resource("assets", "mpuvr.png"),
 ]
+_SPLASH_CANDIDATES = [
+    paths.resource("splash.png"),
+    paths.resource("MPUVR_splash.png"),
+    paths.resource("assets", "splash.png"),
+    paths.resource("assets", "MPUVR_splash.png"),
+]
 
 
 def _first_existing(candidates: list[str]) -> str | None:
@@ -38,3 +44,11 @@ def icon_ico() -> str | None:
 def icon_png() -> str | None:
     """Path to a .png for tkinter's iconphoto fallback, or None."""
     return _first_existing(_PNG_CANDIDATES)
+
+
+def splash_png() -> str | None:
+    """Path to the startup splash image (PNG), or None.
+
+    A user-supplied ``splash.png`` (root or assets/) wins over the generated one.
+    """
+    return _first_existing(_SPLASH_CANDIDATES)
