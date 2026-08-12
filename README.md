@@ -1,5 +1,11 @@
 # Marvel Powers United VR — Level Select Tool
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/7a189bf8-9dee-43a7-9f57-58549ef8bcbb" alt="Jah-Yee Grammar Police" width="700">
+</p>
+
+---
+
 A rewrite of the ARMGDDN Games level-select tool. It launches Marvel Powers
 United VR, injects the Universal Unreal Engine Unlocker (UUU) DLL **directly**
 (no UuuClient GUI), and loads any level through the Unreal console — including
@@ -36,7 +42,7 @@ Drop the tool into the game folder, next to these (same as the original):
 ```
 
 ## Usage
-
+0. This game has always had issues with VD, and oculus headsets are most likely to work. Link or airlink with gammon for rift next to the shipping exe is REQUIRED.
 1. Click **Start / Restart Game** (or launch the game yourself — the tool
    auto-detects it).
 2. Pick a level. That's it — the DLL is injected automatically on first load.
@@ -112,24 +118,6 @@ It uses `splash.png` if you drop one next to the tool (or into `assets/`) —
 otherwise a generated `assets/splash.png` is used. The splash window is sized to
 the image, so make your `splash.png` the size you want it shown. Turn it off any
 time via **Options → Show splash screen on startup**.
-
-## Running from source
-
-```
-pip install -r requirements.txt
-python run.py
-```
-
-## Building the .exe
-
-On Windows:
-
-```
-build.bat
-```
-
-This produces `dist/MPUVR Level Select Tool.exe`. Copy it next to the
-`WindowsNoEditor` and `InjectUUU` folders (see **Layout** above).
 
 ## Notes
 
